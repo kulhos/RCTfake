@@ -1,7 +1,6 @@
 package cz.mersa;
 
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
+import net.sf.json.JSONObject;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -10,48 +9,62 @@ import java.net.InetAddress;
 
 public class Main {
 
+    DatagramSocket serverSocket;
+    static int DELAY = 100;
     public static void main(String[] args) throws IOException {
-        {
-            byte[] receiveData = new byte[1024];
-            byte[] sendData = new byte[1024];
-            DatagramSocket serverSocket = new DatagramSocket(995);
+        Main m = new Main();
+        m.run(args);
+    }
 
-            while (true) {
+    public void run(String[] args) throws IOException {
+        // serverSocket = new DatagramSocket(9876);
+        serverSocket = new DatagramSocket(995);
+        byte[] receiveData = new byte[1024];
+        byte[] sendData = new byte[1024];
+        Boolean cont = true;
+        while (cont) {
+            DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
+            serverSocket.receive(receivePacket);
+            String sentence = new String(receivePacket.getData(),0,receivePacket.getLength());
+            System.out.println("RECEIVED: " + sentence + ".");
 
-                DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
-                serverSocket.receive(receivePacket);
-                String sentence = new String(receivePacket.getData(),0, receivePacket.getLength());
-                System.out.println("RECEIVED: " + sentence +".");
+            if (! sentence.equals("RCT_DISCOVERY")) continue;
 
-                if (sentence.equals("RCT_DISCOVERY")) {
-                    System.out.println("Got it");
-                    InetAddress IPAddress = receivePacket.getAddress();
-                    int port = receivePacket.getPort();
-                    long sTime = System.currentTimeMillis();
+            // InetAddress IPAddress = receivePacket.getAddress();
+            // int port = receivePacket.getPort();
+            serverLoop(receivePacket.getAddress(),receivePacket.getPort());
+        }
+    }
 
-                    while (true) {
+    void serverLoop(InetAddress addr, int port) {
+        boolean cont = true;
+        int cnt = 0;
 
-                        JSONObject o = new JSONObject();
-                        o.put("t", (System.currentTimeMillis() - sTime));
+        while (cont) {
+            JSONObject jo = new JSONObject().element("t", System.currentTimeMillis());
+            Object[] arr = new Object[]{
+                    new JSONObject().accumulate("i","L").accumulate("u","m").accumulate("v", Math.sin(System.currentTimeMillis())),
+                    new JSONObject().accumulate("i","S1").accumulate("v",cnt++)
+            };
+            jo.accumulate("s", arr);
+            System.out.println(jo.toString());
+            try {
 
-                        JSONArray s = new JSONArray();
-                        JSONObject l = new JSONObject();
-                        l.put("i","L");
-                        l.put("u","m");
-                        l.put("v",(System.currentTimeMillis()/10000));
-                        s.add(l);
+                // send it
+                DatagramPacket packet = new DatagramPacket(jo.toString().getBytes(), jo.toString().length(), addr, port);
+                serverSocket.send(packet);
 
-                        o.put("s", s);
-
-                        // {"i":"L","u":"m","v":mmm.m},	// ujeta draha v metrech
-                        // {"i":"Ub","u":"V","v":uu.u},	// napeti baterie;
-                        sendData = o.toJSONString().getBytes();
-                        DatagramPacket sendPacket =
-                                new DatagramPacket(sendData, sendData.length, IPAddress, port);
-                        serverSocket.send(sendPacket);
-                    }
+                // sleep for a while
+                try {
+                    Thread.sleep(DELAY);
+                } catch (InterruptedException e) {
                 }
+            } catch (IOException e) {
+                e.printStackTrace();
+                cont = false;
             }
         }
+        serverSocket.close();
+
     }
 }
