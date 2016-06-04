@@ -80,8 +80,10 @@ public class RCTfake {
             JSONObject jo = new JSONObject(); jo.put("t", System.currentTimeMillis());
             JSONArray arr = new JSONArray();
             JSONObject dist = new JSONObject(); dist.put("i","L"); dist.put("u","m"); dist.put("v", Math.sin(System.currentTimeMillis()));
-            JSONObject i = new JSONObject(); i.put("i","S1"); i.put("v",cnt++);
             arr.add(dist);
+            JSONObject i = new JSONObject(); i.put("i","Ub"); i.put("u","V"); i.put("v",24 - (cnt++/10));
+            arr.add(i);
+            JSONObject b1 = new JSONObject(); b1.put("i","Ib"); i.put("u","A"); i.put("v",3);
             arr.add(i);
             jo.put("s", arr);
             System.out.println(jo.toString());
