@@ -1,5 +1,7 @@
 package cz.mersa.RCTfake;
 
+import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.Table;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
@@ -13,10 +15,12 @@ import java.util.concurrent.Executors;
 
 public class RCTfake {
 
+    public static final long CLIENT_TIMEOUT = 10; // 10 seconds heartbeat
     static int DELAY = 100;
     DatagramSocket serverSocket;
 
     Executor executor = Executors.newSingleThreadExecutor();
+    Table<InetAddress, Integer, UDPServer> servers = HashBasedTable.create();
 
     public static void main(String[] args) throws IOException {
         RCTfake m = new RCTfake();
@@ -36,23 +40,34 @@ public class RCTfake {
             System.out.println("RECEIVED: " + sentence + ".");
 
             if (sentence.equals("RCT_DISCOVERY")) {
-                UDpServer s = new UDpServer(serverSocket, receivePacket);
+                UDPServer s = new UDPServer(serverSocket, receivePacket);
+                servers.put(receivePacket.getAddress(), receivePacket.getPort(), s);
                 executor.execute(s);
+            }
+
+            if (sentence.equals("HRTBT")) {
+                UDPServer s = servers.get(receivePacket.getAddress(), receivePacket.getPort());
+                if (s != null) {
+                    System.out.println("Heartbeat received");
+                    s.setAlive();
+                }
             }
         }
     }
 
 }
 
-    class UDpServer implements Runnable {
+    class UDPServer implements Runnable {
         DatagramSocket socket;
         private InetAddress addr;
         private int port;
+        private long lastAlive;
 
-        public UDpServer(DatagramSocket socket, DatagramPacket packet) {
+        public UDPServer(DatagramSocket socket, DatagramPacket packet) {
             this.socket = socket;
             this.addr = packet.getAddress();
             this.port = packet.getPort();
+            setAlive();
         }
 
     public void run() {
@@ -85,8 +100,21 @@ public class RCTfake {
                 e.printStackTrace();
                 cont = false;
             }
+
+            if (! isAlive()) {
+                System.out.println("Client not responding, closing stream");
+                cont=false;
+            }
         }
-        socket.close();
 
     }
+
+        public void setAlive() {
+            this.lastAlive = System.currentTimeMillis();
+        }
+
+        public boolean isAlive() {
+            if ((System.currentTimeMillis() - this.lastAlive)/1000 > RCTfake.CLIENT_TIMEOUT) return false;
+            return true;
+        }
 }
