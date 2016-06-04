@@ -8,8 +8,8 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="com.googlecode.json-simple:json-simple:1.1.1" level="project" />
-    <orderEntry type="library" exported="" name="net.sf.json-lib:json-lib:2.4" level="application" />
     <orderEntry type="library" name="json-lib-2.4-jdk15" level="project" />
+    <orderEntry type="library" name="net.sf.json-lib:json-lib:1.1" level="application" />
+    <orderEntry type="library" name="net.sf.json-lib:json-lib:2.4" level="application" />
   </component>
 </module>
-
