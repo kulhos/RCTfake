@@ -57,33 +57,48 @@ public class RCTfake {
 
 }
 
-    class UDPServer implements Runnable {
-        DatagramSocket socket;
-        private InetAddress addr;
-        private int port;
-        private long lastAlive;
+class UDPServer implements Runnable {
+    DatagramSocket socket;
+    private InetAddress addr;
+    private int port;
+    private long lastAlive;
 
-        public UDPServer(DatagramSocket socket, DatagramPacket packet) {
-            this.socket = socket;
-            this.addr = packet.getAddress();
-            this.port = packet.getPort();
-            setAlive();
-        }
+    double[] values = new  double[100];
+
+    public UDPServer(DatagramSocket socket, DatagramPacket packet) {
+        this.socket = socket;
+        this.addr = packet.getAddress();
+        this.port = packet.getPort();
+        setAlive();
+    }
 
     public void run() {
         boolean cont = true;
-        int cnt = 0;
+        int cnt = 0, iter = 0;
 
         System.out.println("Starting thread " + Thread.currentThread().getName());
 
         while (cont) {
-            JSONObject jo = new JSONObject(); jo.put("t", System.currentTimeMillis());
+            iter = 0;
+            JSONObject jo = new JSONObject();
+            jo.put("t", System.currentTimeMillis());
             JSONArray arr = new JSONArray();
-            JSONObject dist = new JSONObject(); dist.put("i","L"); dist.put("u","m"); dist.put("v", Math.sin(System.currentTimeMillis()));
-            arr.add(dist);
-            JSONObject i = new JSONObject(); i.put("i","Ub"); i.put("u","V"); i.put("v",24 - (cnt++/10));
+            JSONObject dist = new JSONObject();
+            dist.put("i", "L");
+            dist.put("u", "m");
+            dist.put("v", cnt++);
+            arr.add(dist); iter++;
+
+            JSONObject i = new JSONObject();
+            i.put("i", "Ub");
+            i.put("u", "V");
+            i.put("v", getNextVal(iter++));
             arr.add(i);
-            JSONObject b1 = new JSONObject(); b1.put("i","Ib"); i.put("u","A"); i.put("v",3);
+
+            JSONObject b1 = new JSONObject();
+            b1.put("i", "Ib");
+            i.put("u", "A");
+            i.put("v", getNextVal(iter++));
             arr.add(i);
             jo.put("s", arr);
             System.out.println(jo.toString());
@@ -103,20 +118,36 @@ public class RCTfake {
                 cont = false;
             }
 
-            if (! isAlive()) {
+            if (!isAlive()) {
                 System.out.println("Client not responding, closing stream");
-                cont=false;
+                cont = false;
             }
         }
 
     }
 
-        public void setAlive() {
-            this.lastAlive = System.currentTimeMillis();
-        }
+    private double getNextVal(int i) {
 
-        public boolean isAlive() {
-            if ((System.currentTimeMillis() - this.lastAlive)/1000 > RCTfake.CLIENT_TIMEOUT) return false;
-            return true;
+        values[i] = values[i] + Math.random() - 0.5;
+        return values[i];
+    }
+
+    public void setAlive() {
+        this.lastAlive = System.currentTimeMillis();
+    }
+
+    public boolean isAlive() {
+        if ((System.currentTimeMillis() - this.lastAlive) / 1000 > RCTfake.CLIENT_TIMEOUT) return false;
+        return true;
+    }
+
+    private static double[] getRandomWalk(int numPoints) {
+
+        double[] y = new double[numPoints];
+        y[0] = 0;
+        for (int i = 1; i < y.length; i++) {
+            y[i] = y[i - 1] + Math.random() - .5;
         }
+        return y;
+    }
 }
