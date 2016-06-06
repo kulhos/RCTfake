@@ -95,11 +95,24 @@ class UDPServer implements Runnable {
             i.put("v", getNextVal(iter++));
             arr.add(i);
 
-            JSONObject b1 = new JSONObject();
-            b1.put("i", "Ib");
+            i = new JSONObject();
+            i.put("i", "Ib");
             i.put("u", "A");
             i.put("v", getNextVal(iter++));
             arr.add(i);
+
+            i = new JSONObject();
+            i.put("i", "Uc");
+            i.put("u", "V");
+            i.put("v", getNextVal(iter++));
+            arr.add(i);
+
+            i = new JSONObject();
+            i.put("i", "Ic");
+            i.put("u", "A");
+            i.put("v", getNextVal(iter++));
+            arr.add(i);
+
             jo.put("s", arr);
             System.out.println(jo.toString());
             try {
